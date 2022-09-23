@@ -136,7 +136,8 @@ bool verifyResult(float* values, int* exponents, float* output, float* gold, int
   if (incorrect != -1) {
     if (incorrect >= N)
       printf("You have written to out of bound value!\n");
-    printf("Wrong calculation at value[%d]!\n", incorrect);
+    printf("Wrong calculation at value[%d]! gold:%f output:%f\n", 
+      incorrect, gold[incorrect], output[incorrect]);
     printf("value  = ");
     for (int i=0; i<N; i++) {
       printf("% f ", values[i]);
@@ -249,7 +250,41 @@ void clampedExpVector(float* values, int* exponents, float* output, int N) {
   // Your solution should work for any value of
   // N and VECTOR_WIDTH, not just when VECTOR_WIDTH divides N
   //
-  
+  __cs149_vec_float x;
+  __cs149_vec_int exp;
+  __cs149_vec_float res;
+  __cs149_vec_int ones = _cs149_vset_int(1);
+  __cs149_vec_int zeros = _cs149_vset_int(0);
+  __cs149_vec_float up_bound = _cs149_vset_float(9.999999f);
+
+  __cs149_mask maskAll = _cs149_init_ones();
+  __cs149_mask maskIsNotNegative;
+
+  for (int i = 0; i < N; i += VECTOR_WIDTH) {
+    
+    res = _cs149_vset_float(1.f);
+    _cs149_vload_float(x, values+i, maskAll);    
+    _cs149_vload_int(exp, exponents+i, maskAll);    
+
+    do {
+      // if (exp > 0)
+      _cs149_vgt_int(maskIsNotNegative, exp, zeros, maskAll);
+      // res = res * x
+      _cs149_vmult_float(res, res, x, maskIsNotNegative);
+      // exp = exp - 1
+      _cs149_vsub_int(exp, exp, ones, maskAll);
+
+    } while (_cs149_cntbits(maskIsNotNegative) > 0);
+
+    _cs149_vgt_float(maskIsNotNegative, res, up_bound, maskAll);
+    if (i + VECTOR_WIDTH > N) {
+      __cs149_mask valid_mask = _cs149_init_ones(N - i);
+      maskAll = _cs149_mask_and(maskAll, valid_mask);
+      maskIsNotNegative = _cs149_mask_and(maskIsNotNegative, valid_mask);
+    }
+    _cs149_vstore_float(output+i, res, maskAll);
+    _cs149_vstore_float(output+i, up_bound, maskIsNotNegative);
+  } 
 }
 
 // returns the sum of all elements in values

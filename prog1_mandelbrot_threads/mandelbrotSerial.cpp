@@ -88,5 +88,7 @@ void mandelbrotSerial(
             output[index] = mandel(x, y, maxIterations);
         }
     }
+
+
 }
 
