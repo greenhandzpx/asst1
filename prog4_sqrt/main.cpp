@@ -34,7 +34,19 @@ int main() {
         // to you generate best and worse-case speedups
         
         // starter code populates array with random input values
-        values[i] = .001f + 2.998f * static_cast<float>(rand()) / RAND_MAX;
+        // values[i] = .001f + 2.998f * static_cast<float>(rand()) / RAND_MAX;
+        // values[i] = 2.999f;
+
+        /**
+         * solution:
+         * every time ispc will load a 8-width simd instruction which means 8 threads execute at the same time
+         * so we can emplify the imbalance between the 8 threads 
+         * */
+        if (i % 8 == 0) {
+            values[i] = 2.99999f;
+        } else {
+            values[i] = 1.0f;
+        }
     }
 
     // generate a gold version to check results
